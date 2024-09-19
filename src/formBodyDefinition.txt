@@ -1,0 +1,30 @@
+Business Clearance
+
+residentID
+
+or
+
+nonResident
+-name
+    - last
+    - first
+    - middle
+    - suffix
+-address
+-dateOfBirth
+-placeOfBirth
+
+
+business
+-businessName
+-location
+-natureOfBusiness
+
+purpose
+OTCNo
+ORNo
+dateIssued
+placeIssued
+
+formType
+formName

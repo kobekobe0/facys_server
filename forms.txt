@@ -1,0 +1,53 @@
+x Barangay Clearance - BC
+x Bonafide Resident Certification - BRC
+x Building Clearance - BDC
+x Business Clearance - BSC
+x Excavation Clearance - EX
+x Calamity Loan - CL
+x Closed Business - CB
+x Co-Habitation Certification - CH
+x Electrical Clearance - ECC
+x Employment Clearance - EC
+x Fencing Clearance - FC
+x Indigency Certification - IC
+x ITR Exemption - ITR
+x Late BC Registration - LBC
+x Lipat Bahay - LB
+x Non Resident Certification - NRC
+x Medical Certification - MC
+x PAO Certification - PAO
+x Reconstruction Clearance - RC
+x Solo Parent Certification - SLP
+x Solid Waste Disposal - SWD
+x TODA Certification - TODA
+x Unemployment Certification - UEC
+x Water Permit - WP
+x Zoning Clearance - ZC
+
+
+
+BC - Barangay Clearance
+BDC - Building Clearance
+BRC - Bonafide Resident Certification Certificate of residency
+BSC - Business Clearance
+CL - Calamity Loan
+CB - Closed Business
+CH - Co-Habitation Certification
+ECC - Electrical Clearance
+EC - Employment Clearance
+EX - Excavation Clearance
+FC - Fencing Clearance
+IC - Indigency Certification
+ITR - ITR Exemption
+LBC - Late BC Registration
+LB - Lipat Bahay
+MC - Medical Certification
+NRC - Non Resident Certification
+PAO - PAO Certification
+RC - Reconstruction Clearance
+SLP - Solo Parent Certification
+SWD - Solid Waste Disposal
+TODA - TODA Certification
+UEC - Unemployment Certification
+WP - Water Permit
+ZC - Zoning Clearance
