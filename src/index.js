@@ -44,7 +44,9 @@ const corsOptions = {
         "http://192.168.1.242",
         "https://192.168.100.17:3000",
         "https://192.168.100.17:3000/",
-	    "*"
+	    "https://facys.vercel.app/",
+        "https://facys.vercel.app",
+        "*"
     ],
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true,
