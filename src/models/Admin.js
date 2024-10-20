@@ -5,10 +5,14 @@ const adminSchema = new Schema({
         type: String,
         required: true,
     },
-    username: {
+    name: {
         type: String,
         required: true,
     },
+    email: {
+        type: String,
+        required: true,
+    }
 }); 
 
 const Admin = model("Admin", adminSchema);

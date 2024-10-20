@@ -30,19 +30,6 @@ const generateAuthToken = (user, role) => {
             };
             break;
 
-        case 'SecurityGuard':
-            payload = {
-                role: 'SecurityGuard',
-                name: {
-                    first: user.name.first,
-                    middle: user.name.middle,
-                    last: user.name.last,
-                    suffix: user.name.suffix,
-                },
-                _id: user._id,
-            };
-            break;
-
         default:
             throw new Error('Invalid role');
     }

@@ -14,11 +14,14 @@ import studentRouter from "./routes/Student.js";
 import vehicleRouter from "./routes/Vehicle.js";
 import resetPasswordRouter from "./routes/ResetPassword.js";
 import loadEmbeddingsIntoMemory from "./config/loadfaces.js";
+import createDefaultAdmin from "./helper/createDefaultAdmin.js";
+import adminRouter from "./routes/Admin.js";
+import faceRouter from "./routes/Face.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let faceMatcher = null;
+global.faceMatcher = null;
 
 dotenv.config();
 
@@ -33,18 +36,22 @@ app.use(express.urlencoded({ extended: true }));
 
 const corsOptions = {
     origin: [
-        "http://localhost:3000",
-        "http://localhost:3000/",
+        "https://localhost:3000",
+        "https://localhost:3000/",
         "http://localhost:5173",
 	    "http://192.168.100.104",
         "http://localhost:5173/",
         "http://192.168.1.242",
+        "https://192.168.100.17:3000",
+        "https://192.168.100.17:3000/",
 	    "*"
     ],
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true,
     optionsSuccessStatus: 204
 };
+
+createDefaultAdmin();
 
 app.use(cors(corsOptions));
 
@@ -69,25 +76,30 @@ app.use(sanitizeObjectWithTrimMiddleware)
 app.use("/api/student", studentRouter)
 app.use("/api/vehicle", vehicleRouter)
 app.use("/api/reset-password", resetPasswordRouter)
+app.use("/api/admin", adminRouter)
+app.use("/api/face", faceRouter)
 
-faceMatcher = loadEmbeddingsIntoMemory()
+loadEmbeddingsIntoMemory().then(matcher => {
+    global.faceMatcher = matcher;
+    console.log('FaceMatcher loaded into memory');
+});
 
 //shutdown
-app.post('/api/shutdown', (req, res) => {
-    console.log('Shutting down server');
-    try{
-        exec('sudo /sbin/shutdown -h now', (error, stdout, stderr) => {
-            if (error) {
-                console.error(`Error executing shutdown: ${error}`);
-                return res.status(500).json({ message: 'Failed to shut down server' });
-            }
-            res.status(200).json({ message: 'Server is shutting down' });
-        });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: 'Failed to shut down server' });
-    }
-});
+// app.post('/api/shutdown', (req, res) => {
+//     console.log('Shutting down server');
+//     try{
+//         exec('sudo /sbin/shutdown -h now', (error, stdout, stderr) => {
+//             if (error) {
+//                 console.error(`Error executing shutdown: ${error}`);
+//                 return res.status(500).json({ message: 'Failed to shut down server' });
+//             }
+//             res.status(200).json({ message: 'Server is shutting down' });
+//         });
+//     } catch (error) {
+//         console.error(error);
+//         return res.status(500).json({ message: 'Failed to shut down server' });
+//     }
+// });
 
 app.post('/api/backup', async (req, res) => {
     try {

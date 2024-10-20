@@ -24,6 +24,75 @@ const upload = multer({
 let requestQueue = [];
 let processing = false;
 
+function parseStudentInfo(dataArray) {
+    // Regex for matching the degree (Bachelor of, Doctor of, Master of)
+    const degreeRegex = /^(Bachelor|Doctor|Master)\s+of\s+/;
+
+    // Regex for matching the semester and academic year
+    const semesterRegex = /([1-3](?:st|nd|rd))\s*(?:Semester)?\s*(?:AY)?\s*(\d{4})-(\d{4})/i;
+
+    // Initialize variables for department, degree, yearLevel, section, and semester/AY
+    let department = '';
+    let degree = '';
+    let yearLevel = '';
+    let section = '';
+    let SY = null;
+
+    // Check if we need to merge department
+    let departmentMerged = false;
+
+    // Loop through the data
+    dataArray.forEach((item, index) => {
+        // Detect degree first (e.g., "Bachelor of", "Master of", etc.)
+        if (degreeRegex.test(item)) {
+            degree = item;
+
+            // Check if the previous two elements are the department (merged case)
+            if (index >= 2 && !departmentMerged) {
+                department = dataArray[index - 2] + ' ' + dataArray[index - 1];
+                departmentMerged = true;
+            }
+        }
+
+        // Detect year level (e.g., "4th Year")
+        if (/(\d{1})(st|nd|rd|th)\s+Year/.test(item)) {
+            yearLevel = item;
+        }
+
+        // Detect section (e.g., "BSIT", "MSIT", "BS Biology", etc.)
+        if (/^BS|MS|PhD/.test(item)) {
+            section = item;
+        }
+
+        // Detect semester and academic year (e.g., "1st Semester AY 2024-2025")
+        const semesterMatch = item.match(semesterRegex);
+        if (semesterMatch) {
+            SY = {
+                semester: semesterMatch[1],
+                start: parseInt(semesterMatch[2]),
+                end: parseInt(semesterMatch[3])
+            };
+        }
+
+        // If no merging needed and only one department
+        if (!departmentMerged && index === 0 && degreeRegex.test(dataArray[index + 1])) {
+            department = dataArray[index];
+        }
+    });
+
+    // Disregard the last item if it does not contain relevant information
+    if (dataArray.length > 0 && !degreeRegex.test(dataArray[dataArray.length - 1]) && !semesterRegex.test(dataArray[dataArray.length - 1])) {
+        dataArray.pop();
+    }
+
+    return {
+        department,
+        degree,
+        yearLevel,
+        section,
+        SY
+    };
+}
 const processQueue = async () => {
     if (processing) {
         console.log('Request queue is already being processed...');
@@ -63,7 +132,7 @@ const handleRequest = async (req, res) => {
         deleteFile(filePath);  // Ensure file is deleted on error
     });
     pdfParser.on("readable", (meta) => {
-        //console.log("PDF Metadata", meta)
+        //when pdf is not generated from student portal
         if (meta && meta.Meta){
             if(!meta.Meta.Creator.includes(process.env.PDF_CREATOR) || !meta.Meta.Producer.includes(process.env.PDF_PRODUCER)){
                 responseSent = true;
@@ -77,9 +146,12 @@ const handleRequest = async (req, res) => {
     pdfParser.on('pdfParser_dataReady', async (pdfData) => {
         if (responseSent) return; // Avoid double responses
         const texts = extractText(pdfData);
-        const details = extractDetails(texts);
+        let details = extractDetails(texts);
         const schedules = groupSchedules(extractScheduleBlock(texts));
 
+        const otherDetails = parseStudentInfo(texts.slice(22, 29))
+
+        details = {...details, ...otherDetails}
         responseSent = true;
         deleteFile(filePath);
 
@@ -163,7 +235,6 @@ const extractText = (data) => {
 const extractDetails = (texts) => ({
     studentNumber: texts[18],
     studentName: texts[19],
-    department: texts[22]
 });
 
 const extractScheduleBlock = (texts) => {
