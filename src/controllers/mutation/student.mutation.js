@@ -14,12 +14,13 @@ export const createStudent = async (req, res) => {
         const schedule = JSON.parse(student.schedule);
         const { faceData } = req.body;
 
+        console.log("Student Data:", student);
+        console.log("Schedule Data:", schedule);
+
         // Prepare face descriptor array
         const faceDescriptorArray = Object.keys(faceData).map(key => parseFloat(faceData[key]));
         const inputFaceDescriptor = new Float32Array(faceDescriptorArray);
         
-        console.log("Face Descriptor Input:", inputFaceDescriptor);
-
         // Check if faceMatcher is initialized
         if (global.faceMatcher === null) {
             console.log("Creating new student...");
@@ -83,6 +84,12 @@ export const createStudent = async (req, res) => {
             schedule,
             studentNumber: student.studentNumber,
             department: student.department,
+            section: student.section,
+            degree: student.degree,
+            yearLevel: student.yearLevel,
+            SY: student.SY,
+            dateOfBirth: student.dateOfBirth,
+
         });
 
         if (!newStudent) {
