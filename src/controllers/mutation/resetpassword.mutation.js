@@ -25,8 +25,8 @@ export const createResetPassword = async (req, res) => {
         const emailOptions = {
             to: student.email,
             subject: "Reset your password",
-            text: `Click here to reset your password: ${process.env.FRONTEND_URL}/reset-password/${resetPassword._id} - This will expire after 24 hours`,
-            html: `<a href="${process.env.FRONTEND_URL}/reset-password/${resetPassword._id}">Click here to reset your password</a>`,
+            text: `Click here to reset your password: ${process.env.FRONTEND_URL}/forgot-password/${resetPassword._id} - This will expire after 24 hours`,
+            html: `<a href="${process.env.FRONTEND_URL}/forgot-password/${resetPassword._id}">Click here to reset your password</a>`,
         }
 
         sendEmail(emailOptions);

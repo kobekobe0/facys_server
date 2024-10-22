@@ -49,6 +49,22 @@ const studentSchema = new Schema({
         type: String,
         required: true,
     },
+    registrationPicture: {
+        type: String,
+    },
+    isBlocked: {
+        type: Boolean,
+        required: true,
+        default: false,
+    },
+    password: {
+        type: String,
+        required: true,
+    },
+    email: {
+        type: String,
+        required: true,
+    }
 });
 
 // Add the pagination plugin to the schema

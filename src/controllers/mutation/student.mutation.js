@@ -13,6 +13,7 @@ export const createStudent = async (req, res) => {
         const student = req.body;
         const schedule = JSON.parse(student.schedule);
         const { faceData } = req.body;
+        const pfpPath = `${req.filename}`;
 
         console.log("Student Data:", student);
         console.log("Schedule Data:", schedule);
@@ -21,6 +22,8 @@ export const createStudent = async (req, res) => {
         const faceDescriptorArray = Object.keys(faceData).map(key => parseFloat(faceData[key]));
         const inputFaceDescriptor = new Float32Array(faceDescriptorArray);
         
+        const encryptedPassword = await bcrypt.hash(student.password, 10);
+
         // Check if faceMatcher is initialized
         if (global.faceMatcher === null) {
             console.log("Creating new student...");
@@ -38,6 +41,8 @@ export const createStudent = async (req, res) => {
                 yearLevel: student.yearLevel,
                 SY: student.SY,
                 dateOfBirth: student.dateOfBirth,
+                password: encryptedPassword,
+                email: student.email,
             });
 
             console.log("New Student Created:", newStudent);
@@ -89,7 +94,8 @@ export const createStudent = async (req, res) => {
             yearLevel: student.yearLevel,
             SY: student.SY,
             dateOfBirth: student.dateOfBirth,
-
+            password: encryptedPassword,
+            email: student.email,
         });
 
         if (!newStudent) {

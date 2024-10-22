@@ -12,7 +12,7 @@ const loadEmbeddingsIntoMemory = async () => {
     ));
 
     // Return a FaceMatcher instance using the labeled face descriptors
-    return new faceapi.FaceMatcher(labeledFaceDescriptors, 0.6); // 0.6 is the matching threshold
+    return new faceapi.FaceMatcher(labeledFaceDescriptors, 0.5); // 0.6 is the matching threshold
 };
 
 export default loadEmbeddingsIntoMemory;

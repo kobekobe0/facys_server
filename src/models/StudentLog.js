@@ -6,27 +6,13 @@ const studentLogSchema = new Schema({
         type: String,
         ref: 'Student'
     },
-    studentNumber: {
-        type: String,
-    },
-    fullName: {
-        type: String,
-        required: true,
-    },
-    department: {
-        type: String,
-        required: true,
-    },
     timeIn : {
         type: Date,
         required: true,
+        default: Date.now
     },
     timeOut : {
         type: Date,
-    },
-    vehicle: {
-        type: String,
-        ref: 'Vehicle'
     }
 }); 
 

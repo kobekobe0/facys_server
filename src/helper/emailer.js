@@ -17,7 +17,7 @@ export const sendEmail = ({to, subject, text, html}) => {
   return new Promise((resolve, reject) => {
     const mailOptions = {
       from: {
-        name:'ScholarPass Team',
+        name:'Facys',
         address: process.env.GMAIL_EMAIL,
       },
       to: to,
