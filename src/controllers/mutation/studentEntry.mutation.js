@@ -1,5 +1,4 @@
-import StudentLog from '../../models/studentLog.js';
-import paginate from '../../helper/paginate.js';
+import StudentLog from '../../models/StudentLog.js';
 import Student from '../../models/Student.js';
 import { io } from '../../index.js';
 
