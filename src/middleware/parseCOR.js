@@ -146,6 +146,12 @@ const handleRequest = async (req, res) => {
     pdfParser.on('pdfParser_dataReady', async (pdfData) => {
         if (responseSent) return; // Avoid double responses
         const texts = extractText(pdfData);
+
+        if(!texts) return res.status(400).json({
+            message: 'Invalid PDF file. Please upload a official and unaltered COR from student portal.',
+        })
+
+
         let details = extractDetails(texts);
         const schedules = groupSchedules(extractScheduleBlock(texts));
 
@@ -213,9 +219,7 @@ const extractText = (data) => {
     const cleanedHeader = headerContent.replace(/\n|\s+/g, ' ').trim();
 
     if(cleanedHeader !== process.env.PDF_HEADER) {
-        return res.status(400).json({
-            message: 'Invalid PDF file. Please upload a official and unaltered COR from student portal.',
-        })
+        return false
     }
 
     if (data.Pages) {

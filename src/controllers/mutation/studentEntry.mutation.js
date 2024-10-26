@@ -11,10 +11,10 @@ export const createStudentLog = async (req, res) => {
             return res.status(404).json({ message: "Student not found" });
         }
         
-        const lastLog = await StudentLog.findOne().sort({ timeIn: -1 });
-        if (lastLog && lastLog.studentID === studentID && !lastLog.timeOut) {
-            return res.status(400).json({ message: "Student is already logged in a while ago" });
-        }
+        // const lastLog = await StudentLog.findOne().sort({ timeIn: -1 });
+        // if (lastLog && lastLog.studentID === studentID && !lastLog.timeOut) {
+        //     return res.status(400).json({ message: "Student is already logged in a while ago" });
+        // }
 
         const studentLog = await StudentLog.create({
             studentID,
