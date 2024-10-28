@@ -5,18 +5,19 @@ import generateAuthToken from "../../helper/generateAuthToken.js";
 import jwt from 'jsonwebtoken';
 
 export const getStudents = async (req, res) => {
-    const { page, limit, department, search } = req.query;
+    const { page = 1, limit = 100, department, search, yearLevel } = req.query;
 
     const query = {
         deleted: false,
+        ...(yearLevel && { yearLevel: { $regex: yearLevel, $options: 'i' } }), // case-insensitive partial match for yearLevel
         ...(department && { department })
     };
 
     const options = {
-        page: parseInt(page, 10) || 1,
-        limit: parseInt(limit, 10) || 100,
-        sort: { "name.last": 1 }, 
-        select: '-deleted'        
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+        sort: { "name.last": 1 },
+        select: '-deleted'
     };
 
     try {
