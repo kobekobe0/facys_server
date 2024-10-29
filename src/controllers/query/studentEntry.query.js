@@ -46,3 +46,35 @@ export const getStudentLogs = async (req, res) => {
         return res.status(500).json({ error, message: 'Failed to fetch student logs' });
     }
 };
+
+
+export const getStudentLogsById = async (req, res) => {
+    const { id } = req.params;
+    const { page = 1, limit = 100, startDate, endDate } = req.query;
+
+    try {
+        // Construct the date range filter if startDate or endDate are provided
+        const dateFilter = {};
+        if (startDate) dateFilter.$gte = new Date(startDate);
+        if (endDate) dateFilter.$lte = new Date(endDate);
+
+        // Combine filters: studentID and optional timeIn date range
+        const query = { studentID: id };
+        if (startDate || endDate) query.timeIn = dateFilter;
+
+        const logs = await paginate(StudentLog, query, {
+            page,
+            limit,
+            sort: { timeIn: -1 },
+            populate: {
+                path: 'studentID',
+                select: 'name studentNumber department section',
+            },
+        });
+
+        return res.status(200).json(logs);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error, message: 'Failed to fetch student logs' });
+    }
+};

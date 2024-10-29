@@ -64,6 +64,10 @@ const studentSchema = new Schema({
     email: {
         type: String,
         required: true,
+    },
+    updated: {
+        type: Boolean,
+        required: true,
     }
 });
 

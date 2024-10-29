@@ -32,10 +32,11 @@ export const getStudent = async (req, res) => {
     const { id } = req.params;
 
     try {
-        const student = await Student.findById(id).select('name _id schedul email cellphone studentNumber department');
+        const student = await Student.findById(id).select('-password');
         if (!student) {
             return res.status(404).json({ message: "Student not found" });
         }
+        if(student.deleted) return res.status(404).json({ message: "Student account deleted" });
         res.status(200).json(student);
     } catch (error) {
         res.status(500).json({ message: "Error fetching student", error: error.message });
