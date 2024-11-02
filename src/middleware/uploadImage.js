@@ -9,14 +9,16 @@ const uploadSingleImage = upload.single('image');
 
 const processImage = async (req, res, next) => {
   try {
+    console.log(req.files ? req.files : 'No files')
+    console.log(req.file ? req.file : 'No file')
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
     // Compress the image and convert it to WebP format
     const compressedBuffer = await sharp(req.file.buffer)
-      .resize({ width: 800 }) // Resize if needed, adjust as required
-      .webp({ quality: 80 }) // Set quality for compression
+      .resize({ width: 600, height: 600 }) // Resize if needed, adjust as required
+      .jpeg({ quality: 60 }) // Set quality for compression
       .toBuffer();
 
     // Convert the compressed buffer to Base64
@@ -28,7 +30,8 @@ const processImage = async (req, res, next) => {
 
     // Attach the Base64 string to req.filename
     req.filename = base64String;
-
+    console.log(base64String)
+    //req.status(200).json({ message: 'Image uploaded successfully' });
     // Call the next middleware
     next();
   } catch (err) {

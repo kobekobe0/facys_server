@@ -68,6 +68,11 @@ const studentSchema = new Schema({
     updated: {
         type: Boolean,
         required: true,
+        default: true,
+    }, //for cor
+    pfpPath: {
+        type: String,
+        default: null
     }
 });
 
