@@ -9,6 +9,36 @@ import * as faceapi from 'face-api.js';
 import Face from "../../models/Face.js";
 import loadEmbeddingsIntoMemory from "../../config/loadfaces.js";
 
+function liveness(image) {
+    return new Promise((resolve, reject) => {
+        const myHeaders = new Headers();
+        myHeaders.append("token", process.env.API_TOKEN);
+
+        const formdata = new FormData();
+
+        if (typeof image === "string" && image.startsWith("https://")) {
+            formdata.append("photo", image);
+        } else if (typeof image === "string" && image.startsWith("data:image/")) {
+            const blob = base64ToBlob(image);
+            formdata.append("photo", blob, "file");
+        } else {
+            return reject("Unsupported image format.");
+        }
+
+        const requestOptions = {
+            method: 'POST',
+            headers: myHeaders,
+            body: formdata,
+            redirect: 'follow'
+        };
+
+        fetch("https://api.luxand.cloud/photo/liveness", requestOptions)
+            .then(response => response.json())
+            .then(result => resolve(result))
+            .catch(error => reject(error));
+    });
+}
+
 function base64ToBlob(base64) {
     const byteString = atob(base64.split(",")[1]);
     const mimeString = base64.split(",")[0].split(":")[1].split(";")[0];
@@ -22,35 +52,7 @@ function base64ToBlob(base64) {
     
     return new Blob([ab], { type: mimeString });
 }
-function liveness(image, callback) {
-    const myHeaders = new Headers();
-    myHeaders.append("token", process.env.API_TOKEN);
 
-    const formdata = new FormData();
-
-    if (typeof image === "string" && image.startsWith("https://")) {
-        formdata.append("photo", image);
-    } else if (typeof image === "string" && image.startsWith("data:image/")) {
-        // Convert base64 to Blob
-        const blob = base64ToBlob(image);
-        formdata.append("photo", blob, "file");
-    } else {
-        console.error("Unsupported image format.");
-        return;
-    }
-
-    const requestOptions = {
-        method: 'POST',
-        headers: myHeaders,
-        body: formdata,
-        redirect: 'follow'
-    };
-
-    fetch("https://api.luxand.cloud/photo/liveness", requestOptions)
-        .then(response => response.json())
-        .then(result => callback(result))
-        .catch(error => console.log('error', error));
-}
 
 
 //register
@@ -72,6 +74,9 @@ export const createStudent = async (req, res) => {
         const inputFaceDescriptor = new Float32Array(faceDescriptorArray);
         
         const encryptedPassword = await bcrypt.hash(student.password, 10);
+
+        const existingStudent = await Student.findOne({ studentNumber: student.studentNumber });
+        if (existingStudent) return res.status(400).json({ message: 'COR already used' });
 
         // Check if faceMatcher is initialized
         if (global.faceMatcher === null) {
@@ -130,12 +135,13 @@ export const createStudent = async (req, res) => {
             return res.status(400).json({ message: 'Face already exists' });
         }
 
-        //put here the liveness check
-        liveness(pfpPath, (result) => {
-            console.log("CHECKING")
-            console.log(result)
-            if(result?.result == 'fake') return res.status(400).json({ message: 'Fake face detected' });
-        });
+        const result = await liveness(pfpPath);
+        console.log("CHECKING");
+        console.log(result);
+    
+        if (result?.result === 'fake') {
+            return res.status(400).json({ message: 'Fake face detected' });
+        }
 
         // Proceed to create the student
         console.log("Creating new student due to no face match...");
