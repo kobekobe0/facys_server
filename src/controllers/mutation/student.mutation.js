@@ -134,7 +134,7 @@ export const createStudent = async (req, res) => {
         const res = liveness(pfpPath, (result) => {
             console.log("CHECKING")
             console.log(result)
-            if(result?.result == 'fake') return res.status(400).json({ message: 'Fake face detected' });
+            if(result?.result == 'fake') throw error;
         });
 
         // Proceed to create the student
