@@ -131,10 +131,10 @@ export const createStudent = async (req, res) => {
         }
 
         //put here the liveness check
-        const res = liveness(pfpPath, (result) => {
+        liveness(pfpPath, (result) => {
             console.log("CHECKING")
             console.log(result)
-            if(result?.result == 'fake') throw error;
+            if(result?.result == 'fake') return res.status(400).json({ message: 'Fake face detected' });
         });
 
         // Proceed to create the student
