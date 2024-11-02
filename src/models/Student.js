@@ -70,7 +70,7 @@ const studentSchema = new Schema({
         required: true,
         default: true,
     }, //for cor
-    pfpPath: {
+    pfp: {
         type: String,
         default: null
     }
