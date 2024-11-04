@@ -1,5 +1,5 @@
 import express from "express";
-import { blockStudent, createStudent, deleteOutdatedAccounts, deleteStudent, detectFace, unblockStudent, updateFaceData, updatePasswordByAdmin, updateStudent } from "../controllers/mutation/student.mutation.js";
+import { blockStudent, createStudent, deleteOutdatedAccounts, deleteStudent, detectFace, unblockStudent, updateEmail, updateFaceData, updatePassword, updatePasswordByAdmin, updateStudent } from "../controllers/mutation/student.mutation.js";
 import { getStudent, verifyJWT, getStudents, loginStudent, getSelf, getOutdatedAccounts, getBlockedStudents } from "../controllers/query/student.query.js";
 import parseCOR from "../middleware/parseCOR.js";
 import { processImage, uploadSingleImage } from "../middleware/uploadImage.js";
@@ -33,5 +33,8 @@ studentRouter.post('/update-face/:id', adminAuth, uploadSingleImage, processImag
 
 studentRouter.get('/outdated', getOutdatedAccounts)
 studentRouter.put('/delete-outdated', adminAuth, deleteOutdatedAccounts)
+
+studentRouter.put('/email', studentAuth, updateEmail)
+studentRouter.put('/password', studentAuth, updatePassword)
 
 export default studentRouter;

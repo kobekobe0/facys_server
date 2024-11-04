@@ -232,6 +232,61 @@ export const updateStudent = async (req, res) => {
     }
 }
 
+
+export const updateEmail = async (req, res) => {
+    const { _id } = req.user;
+    const { email, password } = req.body;
+
+    console.log(req.body)
+
+
+    try {
+        const student = await Student.findById(_id);
+        if(!student) return res.status(404).json({ message: "Student not found" });
+
+        const isMatch = await bcrypt.compare(password, student.password);
+        if(!isMatch) return res.status(400).json({ message: "Invalid password" });
+
+        student.email = email;
+        await student.save();
+
+        await createSystemLog('UPDATE', 'Student', student._id, 'Student', 'Email updated', null);
+
+        return res.status(200).json({ message: 'Email updated successfully' });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Failed to update email' });
+    }
+}
+
+export const updatePassword = async (req, res) => {
+    const { _id } = req.user;
+    const { oldPassword, newPassword } = req.body;
+
+    try {
+        const student = await Student.findById(_id);
+        if(!student) return res.status(404).json({ message: "Student not found" });
+
+        const isMatch = await bcrypt.compare(oldPassword, student.password);
+
+        if(!isMatch) return res.status(400).json({ message: "Invalid password" });
+
+        const encryptedPassword = await bcrypt.hash(newPassword, 10);
+
+        student.password = encryptedPassword;
+        await student.save();
+
+        await createSystemLog('UPDATE', 'Student', student._id, 'Student', 'Password updated', null);
+
+        return res.status(200).json({ message: 'Password updated successfully' });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Failed to update password' });
+    }
+}
+
 export const deleteStudent = async (req,res) => {
     //delete everything related to the student
     const { id } = req.params;
@@ -372,6 +427,7 @@ export const updatePasswordByAdmin = async (req, res) => {
         return res.status(500).json({ message: 'Failed to update password' });
     }
 }
+
 
 export const changePassword = async (req, res) => {
     const { id } = req.params;

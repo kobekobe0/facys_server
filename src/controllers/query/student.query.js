@@ -104,7 +104,7 @@ export const verifyJWT = async (req, res) => {
 export const getSelf = async (req, res) => {
     const { _id } = req.user;
     try {
-        const student = await Student.findById(_id).select('name _id schedule email cellphone studentNumber pfp department');
+        const student = await Student.findById(_id).select('name _id degree section yearLevel SY schedule email updated cellphone studentNumber pfp department');
         if (!student) {
             return res.status(404).json({ message: "Student not found" });
         }
