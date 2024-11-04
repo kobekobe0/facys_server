@@ -97,6 +97,7 @@ export const createStudent = async (req, res) => {
                 dateOfBirth: student.dateOfBirth,
                 password: encryptedPassword,
                 email: student.email,
+                pfp: pfpPath,
             });
 
             console.log("New Student Created:", newStudent);
@@ -203,8 +204,19 @@ export const updateStudent = async (req, res) => {
     const { id } = req.params;
     const student = req.body;
 
+    const formattedBody = {
+        ...student,
+        schedule: JSON.parse(student.schedule),
+        SY: `AY ${student.SY.start} - ${student.SY.end} ${student.SY.semester} Semester`,
+        updated: true
+    };
+
+
+    console.log(formattedBody)
+    console.log(student.schedule)
+
     try {
-        const updatedStudent = await Student.findByIdAndUpdate(id, student, { new: true });
+        const updatedStudent = await Student.findByIdAndUpdate(id, formattedBody, { new: true });
         if(updatedStudent){
             await createSystemLog('UPDATE', 'Student', updatedStudent._id, 'Student', 'Student updated', null);
         } else {
@@ -219,24 +231,6 @@ export const updateStudent = async (req, res) => {
         return res.status(500).json({ message: 'Failed to update student' });
     }
 }
-
-// export const deleteStudent = async (req, res) => {
-//     const { id } = req.params;
-
-//     try {
-//         const deletedStudent = await Student.findByIdAndUpdate(id, { deleted: true }, { new: true });
-//         if(deletedStudent){
-//             await createSystemLog('DELETE', 'Student', deletedStudent._id, 'Student', 'Student deleted', null);
-//         } else {
-//             return res.status(400).json({ message: 'Failed to delete student' });
-//         }
-
-//         return res.status(200).json({ message: 'Student deleted successfully' });
-//     } catch (error) {
-//         console.error(error);
-//         return res.status(500).json({ message: 'Failed to delete student' });
-//     }
-// }
 
 export const deleteStudent = async (req,res) => {
     //delete everything related to the student
@@ -258,6 +252,13 @@ export const deleteStudent = async (req,res) => {
         await SystemLog.deleteMany({entityID: id})
         await Face.deleteOne({studentID: id})
         await Student.deleteOne({_id: id})
+
+        await createSystemLog('DELETE', 'Student', id, 'Student', 'Student deleted', null);
+
+        loadEmbeddingsIntoMemory().then(matcher => {
+            global.faceMatcher = matcher;
+            console.log('FaceMatcher loaded into memory');
+        })
 
         return res.status(200).json({ message: 'Student deleted successfully' });
     } catch (error) {
@@ -344,5 +345,123 @@ export const unblockStudent = async (req, res) => {
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: 'Failed to block student' });
+    }
+}
+
+
+export const updatePasswordByAdmin = async (req, res) => {
+    const { id } = req.params;
+    const { password } = req.body;
+    const { _id } = req.user;
+    try {
+        const student = await Student.findById(id);
+        if(!student) return res.status(404).json({ message: "Student not found" });
+
+        const admin = await Admin.findById(_id);
+        if(!admin) return res.status(404).json({ message: "Admin not found" });
+
+        const encryptedPassword = await bcrypt.hash(password, 10);
+        student.password = encryptedPassword;
+        await student.save();
+
+        await createSystemLog('UPDATE', 'Student', student._id, 'Student', 'Password updated by admin', null);
+
+        return res.status(200).json({ message: 'Password updated successfully' });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Failed to update password' });
+    }
+}
+
+export const changePassword = async (req, res) => {
+    const { id } = req.params;
+    const { oldPassword, newPassword } = req.body;
+    try {
+        const student = await Student.findById(id);
+        if(!student) return res.status(404).json({ message: "Student not found" });
+
+        const isMatch = await bcrypt.compare(oldPassword, student.password);
+
+        if(!isMatch) return res.status(400).json({ message: "Invalid password" });
+
+        const encryptedPassword = await bcrypt.hash(newPassword, 10);
+
+        student.password = encryptedPassword;
+        await student.save();
+
+        await createSystemLog('UPDATE', 'Student', student._id, 'Student', 'Password updated', null);
+
+        return res.status(200).json({ message: 'Password updated successfully' });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Failed to update password' });
+    }
+}
+
+export const updateFaceData = async (req, res) => {
+    const { id } = req.params;
+    const { faceData, updatePfp } = req.body;
+    const pfpPath = `${req.filename}`;
+    const parsedFaceData = JSON.parse(faceData);
+    try {
+        const student = await Student.findById(id);
+        if(!student) return res.status(404).json({ message: "Student not found" });
+
+        const existing = await Face.findOne({ studentID: id });
+        if(!existing) return res.status(404).json({ message: "Face not found" });
+
+        if(updatePfp == 'true'){
+            student.pfp = pfpPath;
+            await student.save();
+        }
+
+        existing.descriptor = Object.keys(parsedFaceData).map(key => parseFloat(parsedFaceData[key]));
+        await existing.save();
+
+        await createSystemLog('UPDATE', 'Student', student._id, 'Student', 'Face data updated', null);
+
+        
+        loadEmbeddingsIntoMemory().then(matcher => {
+            global.faceMatcher = matcher;
+            console.log('FaceMatcher loaded into memory');
+        })
+
+        return res.status(200).json({ message: 'Face data updated successfully' });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Failed to update face data' });
+    }
+}
+
+
+export const deleteOutdatedAccounts = async (req, res) => {
+    const { password } = req.body;
+    const { _id } = req.user;
+    try {
+        const admin = await Admin.findById(_id);
+        const isMatch = await bcrypt.compare(password, admin.password);
+
+        if (!isMatch) return res.status(400).json({ message: 'Invalid password' });
+
+        const outdateds = await Student.find({ updated: false });
+
+        await Student.deleteMany({ updated: false });
+        await SystemLog.deleteMany({ entityID: { $in: outdateds.map(student => student._id) } });
+        await Face.deleteMany({ studentID: { $in: outdateds.map(student => student._id) } });
+        await StudentLog.deleteMany({ studentID: { $in: outdateds.map(student => student._id) } });
+
+        await createSystemLog('DELETE', 'Student', null, 'Admin', 'Outdated accounts deleted', null);
+
+        loadEmbeddingsIntoMemory().then(matcher => {
+            global.faceMatcher = matcher;
+            console.log('FaceMatcher loaded into memory');
+        })
+
+        return res.status(200).json({ message: 'Outdated accounts deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Failed to delete outdated accounts' });
     }
 }

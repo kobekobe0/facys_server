@@ -18,6 +18,8 @@ import createDefaultAdmin from "./helper/createDefaultAdmin.js";
 import adminRouter from "./routes/Admin.js";
 import faceRouter from "./routes/Face.js";
 import studentLogRouter from "./routes/StudentLog.js";
+import configRouter from "./routes/Config.js";
+import createDefaultConfig from "./helper/createDefaultAdmin copy.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -55,6 +57,7 @@ const corsOptions = {
 };
 
 createDefaultAdmin();
+createDefaultConfig();
 
 app.use(cors(corsOptions));
 
@@ -79,6 +82,8 @@ app.use("/api/reset-password", resetPasswordRouter)
 app.use("/api/admin", adminRouter)
 app.use("/api/face", faceRouter)
 app.use("/api/log", studentLogRouter)
+app.use("/api/config", configRouter)
+
 
 loadEmbeddingsIntoMemory().then(matcher => {
     global.faceMatcher = matcher;

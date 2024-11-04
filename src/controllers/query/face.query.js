@@ -16,10 +16,14 @@ export const queryFace = async (req, res) => {
         return res.status(404).json({ message: 'No match found' });
     }
 
-    const student = await Student.findById(bestMatch._label).select('name studentNumber department degree section yearLevel SY dateOfBirth');
+    const student = await Student.findById(bestMatch._label).select('name studentNumber department degree section yearLevel updated SY dateOfBirth');
     if (!student) {
         return res.status(404).json({ message: 'Student not found' });
     }
+
+    console.log(student)
+
+    if(!student.updated) return res.status(404).json({ message: "Student account not updated" });
 
     return res.status(200).json({ message: 'Match found', student });
 }

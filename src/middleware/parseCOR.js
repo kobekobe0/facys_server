@@ -4,6 +4,7 @@ import PDFParser from 'pdf2json';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { start } from 'repl';
+import Config from '../models/Config.js';
 
 // Get the directory name
 const __filename = fileURLToPath(import.meta.url);
@@ -158,6 +159,17 @@ const handleRequest = async (req, res) => {
         const otherDetails = parseStudentInfo(texts.slice(22, 29))
 
         details = {...details, ...otherDetails}
+
+        const config = await Config.findOne();
+
+        console.log(config.SY.toLowerCase())
+
+        const SYString = `AY ${details.SY.start} - ${details.SY.end} ${details.SY.semester} Semester`.toLocaleLowerCase();
+
+        if(SYString !== config.SY.toLowerCase()) return res.status(400).json({
+            message: 'Invalid PDF file. Please upload a official, updated, and unaltered COR from student portal.',
+        })
+ 
         responseSent = true;
         deleteFile(filePath);
 

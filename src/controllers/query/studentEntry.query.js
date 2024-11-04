@@ -78,3 +78,15 @@ export const getStudentLogsById = async (req, res) => {
         return res.status(500).json({ error, message: 'Failed to fetch student logs' });
     }
 };
+
+
+export const getNumberOfTotalLogs = async (req, res) => {
+    try {
+        const {id} = req.params;
+        const logs = await StudentLog.find({studentID: id}).countDocuments();
+        return res.status(200).json({logs});
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error, message: 'Failed to fetch student logs' });
+    }
+}

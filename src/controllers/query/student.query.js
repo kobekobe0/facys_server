@@ -27,6 +27,30 @@ export const getStudents = async (req, res) => {
         res.status(500).json({ message: "Error fetching students", error: error.message });
     }
 };
+export const getBlockedStudents = async (req, res) => {
+    const { page = 1, limit = 100, department, search, yearLevel } = req.query;
+
+    const query = {
+        isBlocked: true,
+        deleted: false,
+        ...(yearLevel && { yearLevel: { $regex: yearLevel, $options: 'i' } }), // case-insensitive partial match for yearLevel
+        ...(department && { department })
+    };
+
+    const options = {
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+        sort: { "name.last": 1 },
+        select: '-deleted'
+    };
+
+    try {
+        const students = await paginate(Student, query, options, search);
+        res.status(200).json(students);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching students", error: error.message });
+    }
+};
 
 export const getStudent = async (req, res) => {
     const { id } = req.params;
@@ -80,12 +104,22 @@ export const verifyJWT = async (req, res) => {
 export const getSelf = async (req, res) => {
     const { _id } = req.user;
     try {
-        const student = await Student.findById(_id).select('name _id schedule email cellphone studentNumber department');
+        const student = await Student.findById(_id).select('name _id schedule email cellphone studentNumber pfp department');
         if (!student) {
             return res.status(404).json({ message: "Student not found" });
         }
         res.status(200).json(student);
     } catch (error) {
         res.status(500).json({ message: "Error fetching student", error: error.message });
+    }
+}
+
+
+export const getOutdatedAccounts = async (req, res) => {
+    try {
+        const students = await Student.find({ updated: false }).select('name _id email studentNumber department');
+        res.status(200).json(students);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching students", error: error.message });
     }
 }

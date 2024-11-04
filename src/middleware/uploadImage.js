@@ -8,6 +8,11 @@ const upload = multer({ storage: multer.memoryStorage() });
 const uploadSingleImage = upload.single('image');
 
 const processImage = async (req, res, next) => {
+  console.log(req.body)
+  if(req.body.updatePfp !== undefined && req.body.updatePfp == 'false') {
+    console.log('hit')
+    return next()
+  }
   try {
     console.log(req.files ? req.files : 'No files')
     console.log(req.file ? req.file : 'No file')
