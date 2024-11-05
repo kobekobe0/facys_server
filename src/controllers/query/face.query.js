@@ -16,7 +16,7 @@ export const queryFace = async (req, res) => {
         return res.status(404).json({ message: 'No match found' });
     }
 
-    const student = await Student.findById(bestMatch._label).select('name studentNumber department degree section yearLevel updated SY dateOfBirth');
+    const student = await Student.findById(bestMatch._label).select('name studentNumber isBlocked department degree section yearLevel updated SY dateOfBirth');
     if (!student) {
         return res.status(404).json({ message: 'Student not found' });
     }
