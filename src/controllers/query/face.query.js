@@ -24,6 +24,7 @@ export const queryFace = async (req, res) => {
     console.log(student)
 
     if(!student.updated) return res.status(404).json({ message: "Student account not updated" });
+    if(student.isBlocked) return res.status(404).json({ message: "Student is blocked" });
 
     return res.status(200).json({ message: 'Match found', student });
 }
