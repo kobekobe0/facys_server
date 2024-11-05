@@ -140,7 +140,7 @@ export const createStudent = async (req, res) => {
         console.log("CHECKING");
         console.log(result);
     
-        if (result?.result === 'fake') {
+        if (result?.score < 0.8) {
             return res.status(400).json({ message: 'Fake face detected' });
         }
 
