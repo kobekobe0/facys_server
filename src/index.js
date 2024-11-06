@@ -21,6 +21,19 @@ import studentLogRouter from "./routes/StudentLog.js";
 import configRouter from "./routes/Config.js";
 import createDefaultConfig from "./helper/createDefaultAdmin copy.js";
 
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    // Optional: You can exit the process here if you want Railway to restart it
+    // process.exit(1);
+});
+  
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception thrown:', error);
+    // Optional: You can exit the process here as well
+    // process.exit(1);
+});
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
