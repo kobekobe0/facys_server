@@ -1,16 +1,26 @@
 import { Schema, model } from "mongoose";
 
-//just store here all student details
+// Schema to store all student details with main and supporting descriptors
 const faceSchema = new Schema({
-    studentID : {
+    studentID: {
         type: String,
         required: true,
     },
-    descriptor: {
+    mainDescriptor: { // Main face descriptor
         type: [Number],
         required: true,
+    },
+    supportDescriptors: { // Array to store two supporting descriptors
+        type: [[Number]], // Array of arrays
+        validate: [arrayLimit, '{PATH} must contain exactly two supporting descriptors'],
+        required: true,
     }
-}); 
+});
+
+// Custom validator to ensure exactly two supporting descriptors
+function arrayLimit(val) {
+    return val.length === 2;
+}
 
 const Face = model("Face", faceSchema);
 

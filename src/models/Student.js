@@ -31,19 +31,15 @@ const studentSchema = new Schema({
     },
     degree: {
         type: String,
-        required: true,
     },
     section: {
         type: String,
-        required: true,
     },
     yearLevel: {
         type: String,
-        required: true,
     },
     SY: {
         type: String,
-        required: true,
     },
     dateOfBirth: {
         type: String,

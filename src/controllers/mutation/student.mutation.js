@@ -53,9 +53,6 @@ function base64ToBlob(base64) {
     return new Blob([ab], { type: mimeString });
 }
 
-
-
-//register
 export const createStudent = async (req, res) => {
     try {
         const student = req.body;
@@ -64,26 +61,31 @@ export const createStudent = async (req, res) => {
         const parsedFaceData = JSON.parse(faceData);
         const pfpPath = `${req.filename}`;
 
-        console.log(schedule)
-
         console.log("Student Data:", student);
         console.log("Schedule Data:", schedule);
 
-        // Prepare face descriptor array
-        const faceDescriptorArray = Object.keys(parsedFaceData).map(key => parseFloat(parsedFaceData[key]));
-        const inputFaceDescriptor = new Float32Array(faceDescriptorArray);
-        
+        // Directly retrieve the main and support descriptors
+        const mainDescriptor = new Float32Array(parsedFaceData.mainDescriptor);
+        const supportDescriptor1 = new Float32Array(parsedFaceData.supportDescriptor1);
+        const supportDescriptor2 = new Float32Array(parsedFaceData.supportDescriptor2);
+
+        // Log the descriptors to confirm correct parsing
+        console.log("Main Descriptor:", mainDescriptor);
+        console.log("Support Descriptor 1:", supportDescriptor1);
+        console.log("Support Descriptor 2:", supportDescriptor2);
+
+        // Hash the student's password
         const encryptedPassword = await bcrypt.hash(student.password, 10);
 
+        // Check if a student with the same student number already exists
         const existingStudent = await Student.findOne({ studentNumber: student.studentNumber });
         if (existingStudent) return res.status(400).json({ message: 'COR already used' });
 
-        // Check if faceMatcher is initialized
+        // Check if the global face matcher is initialized
         if (global.faceMatcher === null) {
-            console.log("Creating new student...");
+            console.log("Creating new student as face matcher is not initialized...");
 
-            // Create new student in the database
-            console.log(student)
+            // Create the student record
             const newStudent = await Student.create({
                 name: student.name,
                 cellphone: student.cellphone,
@@ -100,52 +102,47 @@ export const createStudent = async (req, res) => {
                 pfp: pfpPath,
             });
 
-            console.log("New Student Created:", newStudent);
-
             if (!newStudent) {
                 return res.status(400).json({ message: 'Failed to create student' });
             }
 
-            // Create face entry for the student
-            console.log("Creating face for the student...");
+            // Create the face data entry with main and supporting descriptors
             const newFace = await Face.create({
                 studentID: newStudent._id,
-                descriptor: faceDescriptorArray,
+                mainDescriptor: Array.from(mainDescriptor),
+                supportDescriptors: [Array.from(supportDescriptor1), Array.from(supportDescriptor2)],
             });
 
             console.log("Face Created:", newFace);
 
-            // Log system activity
+            // Log the creation in system logs
             await createSystemLog('CREATE', 'Student', newStudent._id, 'Student', 'Student created', null);
 
+            // Reload the face matcher with the new embeddings
             loadEmbeddingsIntoMemory().then(matcher => {
                 global.faceMatcher = matcher;
                 console.log('FaceMatcher loaded into memory');
             });
-    
 
             return res.status(200).json({ message: 'Student created successfully', studentID: newStudent._id });
         }
 
-        // Face matcher is initialized, check for duplicates
+        // Face matcher is initialized, check for duplicate faces
         console.log("Checking for existing faces...");
-        const bestMatch = global.faceMatcher.findBestMatch(inputFaceDescriptor);
+        const bestMatch = global.faceMatcher.findBestMatch(mainDescriptor);
         console.log("Best Match Found:", bestMatch);
 
         if (bestMatch._label !== 'unknown') {
             return res.status(400).json({ message: 'Face already exists' });
         }
 
+        // Perform liveness detection
         const result = await liveness(pfpPath);
-        console.log("CHECKING");
-        console.log(result);
-    
         if (result?.score < 0.8) {
             return res.status(400).json({ message: 'Fake face detected' });
         }
 
-        // Proceed to create the student
-        console.log("Creating new student due to no face match...");
+        // Proceed to create the student if all checks pass
         const newStudent = await Student.create({
             name: student.name,
             cellphone: student.cellphone,
@@ -169,12 +166,16 @@ export const createStudent = async (req, res) => {
         // Create face entry for the new student
         const newFace = await Face.create({
             studentID: newStudent._id,
-            descriptor: faceDescriptorArray,
+            mainDescriptor: Array.from(mainDescriptor),
+            supportDescriptors: [Array.from(supportDescriptor1), Array.from(supportDescriptor2)],
         });
+
+        console.log("Face Created:", newFace);
 
         // Log system activity
         await createSystemLog('CREATE', 'Student', newStudent._id, 'Student', 'Student created', null);
 
+        // Reload embeddings into memory for face matching
         loadEmbeddingsIntoMemory().then(matcher => {
             global.faceMatcher = matcher;
             console.log('FaceMatcher loaded into memory');
