@@ -98,8 +98,15 @@ export const getNumbers = async (req, res) => {
 
     try {
         const today = new Date();
-        const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        const end = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+        // const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        // const end = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+        const start = new Date(today);
+        startDate.setDate(today.getDate() - 1); // 13 days before today to get a range of 14 full days + today
+
+        // Set endDate to the end of today by adding one day
+        const end = new Date(today);
+        endDate.setDate(today.getDate() + 1);
 
         // Count all logs for today
         const logsToday = await StudentLog.find({
