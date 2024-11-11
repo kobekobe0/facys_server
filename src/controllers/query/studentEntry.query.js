@@ -93,20 +93,14 @@ export const getNumberOfTotalLogs = async (req, res) => {
 
 
 export const getNumbers = async (req, res) => {
-    //logs today
-    //unique logs today (per studentID, per day)
-
     try {
         const today = new Date();
-        // const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        // const end = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
-
-        const start = new Date(today);
-        start.setDate(today.getDate() - 1); // 13 days before today to get a range of 14 full days + today
-
-        // Set endDate to the end of today by adding one day
-        const end = new Date(today);
-        end.setDate(today.getDate() + 1);
+        
+        // Set start to midnight today
+        const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        
+        // Set end to midnight tomorrow (start of the next day)
+        const end = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
 
         // Count all logs for today
         const logsToday = await StudentLog.find({
