@@ -51,6 +51,30 @@ export const getBlockedStudents = async (req, res) => {
         res.status(500).json({ message: "Error fetching students", error: error.message });
     }
 };
+export const getOutdatedStudents = async (req, res) => {
+    const { page = 1, limit = 100, department, search, yearLevel } = req.query;
+
+    const query = {
+        updated: false,
+        deleted: false,
+        ...(yearLevel && { yearLevel: { $regex: yearLevel, $options: 'i' } }), // case-insensitive partial match for yearLevel
+        ...(department && { department })
+    };
+
+    const options = {
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+        sort: { "name.last": 1 },
+        select: '-deleted'
+    };
+
+    try {
+        const students = await paginate(Student, query, options, search);
+        res.status(200).json(students);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching students", error: error.message });
+    }
+};
 
 export const getStudent = async (req, res) => {
     const { id } = req.params;

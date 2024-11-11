@@ -16,6 +16,20 @@ export const createStudentLog = async (req, res) => {
         //     return res.status(400).json({ message: "Student is already logged in a while ago" });
         // }
 
+        //get the last log of the student
+        const lastLog = await StudentLog.findOne({ studentID: studentID }).sort({ timeIn: -1 });
+        //check if the log timeIn is 10mins ago
+        if (lastLog && lastLog.timeIn) {
+            const timeIn = new Date(lastLog.timeIn);
+            const currentTime = new Date();
+            const timeDiff = Math.abs(currentTime - timeIn);
+            const minutes = Math.floor((timeDiff / 1000) / 60);
+            if (minutes < 10) {
+                return res.status(400).json({ message: "Student is already logged in a while ago" });
+            }
+        }
+
+
         const studentLog = await StudentLog.create({
             studentID,
             timeOut: null,

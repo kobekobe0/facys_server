@@ -1,6 +1,6 @@
 import express from "express";
 import { blockStudent, createStudent, deleteOutdatedAccounts, deleteStudent, detectFace, unblockStudent, updateEmail, updateFaceData, updatePassword, updatePasswordByAdmin, updateStudent } from "../controllers/mutation/student.mutation.js";
-import { getStudent, verifyJWT, getStudents, loginStudent, getSelf, getOutdatedAccounts, getBlockedStudents } from "../controllers/query/student.query.js";
+import { getStudent, verifyJWT, getStudents, loginStudent, getSelf, getOutdatedAccounts, getBlockedStudents, getOutdatedStudents } from "../controllers/query/student.query.js";
 import parseCOR from "../middleware/parseCOR.js";
 import { processImage, uploadSingleImage } from "../middleware/uploadImage.js";
 import { studentAuth } from "../middleware/studentAuth.js";
@@ -17,6 +17,7 @@ studentRouter.put('/update/:id', updateStudent)
 studentRouter.delete('/delete/:id', adminAuth, deleteStudent)
 studentRouter.get('/all', getStudents)
 studentRouter.get('/blocked', getBlockedStudents)
+studentRouter.get('/outdated', getOutdatedStudents)
 studentRouter.get('/student/:id', getStudent)
 studentRouter.get('/self', studentAuth, getSelf)
 
@@ -24,8 +25,8 @@ studentRouter.post('/cor', parseCOR)
 
 
 studentRouter.post('/detect', detectFace)
-studentRouter.put('/block/:id', blockStudent)
-studentRouter.put('/unblock/:id', unblockStudent)
+studentRouter.put('/block/:id', adminAuth, blockStudent)
+studentRouter.put('/unblock/:id', adminAuth, unblockStudent)
 
 studentRouter.put('/password-by-admin/:id', adminAuth, updatePasswordByAdmin)
 

@@ -189,18 +189,6 @@ export const createStudent = async (req, res) => {
     }
 };
 
-const checkCompleteRegistration = async (id) => {
-    const student = await Student.findById(id);
-    //check fields
-    if(student.name.first && student.name.last && student.cellphone && student.email && student.studentNumber && student.department && student.pfp){
-        const studentVehicle = await Vehicle.findOne({ studentID: id });
-        if(studentVehicle){
-            student.completeRegistration = true;
-            await student.save();
-        }
-    }
-}
-
 export const updateStudent = async (req, res) => {
     const { id } = req.params;
     const student = req.body;
@@ -223,8 +211,6 @@ export const updateStudent = async (req, res) => {
         } else {
             return res.status(400).json({ message: 'Failed to update student' });
         }
-
-        await checkCompleteRegistration(id);
 
         return res.status(200).json({ message: 'Student updated successfully' });
     } catch (error) {
@@ -372,8 +358,16 @@ export const detectFace = async (req, res) => {
 
 export const blockStudent = async (req, res) => {
     const { id } = req.params;
+    const {password} = req.body;
+    const {_id} = req.user;
 
     try {
+        const admin = await Admin.findById(_id);
+        if(!admin) return res.status(404).json({ message: "Admin not found" });
+
+        const isMatch = await bcrypt.compare(password, admin.password);
+        if(!isMatch) return res.status(400).json({ message: "Invalid password" });
+
         const student = await Student.findById(id);
         student.isBlocked = true;
         await student.save();
@@ -389,8 +383,15 @@ export const blockStudent = async (req, res) => {
 
 export const unblockStudent = async (req, res) => {
     const { id } = req.params;
-
+    const {password} = req.body;
+    const {_id} = req.user;
     try {
+        const admin = await Admin.findById(_id);
+        if(!admin) return res.status(404).json({ message: "Admin not found" });
+
+        const isMatch = await bcrypt.compare(password, admin.password);
+        if(!isMatch) return res.status(400).json({ message: "Invalid password" });
+        
         const student = await Student.findById(id);
         student.isBlocked = false;
         await student.save();
