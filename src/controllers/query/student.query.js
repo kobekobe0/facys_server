@@ -5,7 +5,7 @@ import generateAuthToken from "../../helper/generateAuthToken.js";
 import jwt from 'jsonwebtoken';
 
 export const getStudents = async (req, res) => {
-    const { page = 1, limit = 100, department, search, yearLevel } = req.query;
+    const { page = 1, limit = 100, department, name, yearLevel } = req.query;
 
     const query = {
         deleted: false,
@@ -21,7 +21,7 @@ export const getStudents = async (req, res) => {
     };
 
     try {
-        const students = await paginate(Student, query, options, search);
+        const students = await paginate(Student, query, options, name);
         res.status(200).json(students);
     } catch (error) {
         res.status(500).json({ message: "Error fetching students", error: error.message });

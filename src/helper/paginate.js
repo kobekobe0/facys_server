@@ -39,6 +39,13 @@ const paginate = async (model, query = {}, options = {}, search = '') => {
                     { logType: { $regex: new RegExp(search, 'i') } }
                 ];
                 break;
+            
+            case 'VisitorLog':
+                query.$or = [
+                    { visitorName: { $regex: new RegExp(search, 'i') } },
+                    { logType: { $regex: new RegExp(search, 'i') } }
+                ];
+                break;
 
             default:
                 // Default search behavior for other models

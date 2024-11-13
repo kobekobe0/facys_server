@@ -4,7 +4,7 @@ import paginate from "../../helper/paginate.js";
 
 export const getStudentLogs = async (req, res) => {
     const { page = 1, limit = 100, name = '', startDate, endDate } = req.query;
-
+    console.log(req.query);
     try {
         // Initialize an empty query object
         let query = {};
