@@ -14,10 +14,13 @@ const loadEmbeddingsIntoMemory = async () => {
         // Combine main and support descriptors into a single array
         const descriptors = [mainDescriptor, ...supportDescriptors];
 
+        // Adjust studentID with VISITOR_ prefix if isVisitor is true
+        const label = face.isVisitor ? `VISITOR_${face.studentID}` : face.studentID;
+
         // Create LabeledFaceDescriptors with multiple descriptors
-        return new faceapi.LabeledFaceDescriptors(face.studentID, descriptors);
+        return new faceapi.LabeledFaceDescriptors(label, descriptors);
     });
-    console.log(faceapi.LabeledFaceDescriptors)
+
     // Return a FaceMatcher instance using the labeled face descriptors
     return new faceapi.FaceMatcher(labeledFaceDescriptors, 0.45); // Adjust threshold as needed
 };

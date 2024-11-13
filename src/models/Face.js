@@ -4,7 +4,11 @@ import { Schema, model } from "mongoose";
 const faceSchema = new Schema({
     studentID: {
         type: String,
+    },
+    isVisitor: {
+        type: Boolean,
         required: true,
+        default: false,
     },
     mainDescriptor: { // Main face descriptor
         type: [Number],

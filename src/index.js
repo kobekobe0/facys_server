@@ -20,6 +20,7 @@ import faceRouter from "./routes/Face.js";
 import studentLogRouter from "./routes/StudentLog.js";
 import configRouter from "./routes/Config.js";
 import createDefaultConfig from "./helper/createDefaultAdmin copy.js";
+import visitorRouter from "./routes/Visitor.js";
 
 process.on('unhandledRejection', (reason, promise) => {
     console.error('Unhandled Rejection at:', promise, 'reason:', reason);
@@ -96,6 +97,7 @@ app.use("/api/admin", adminRouter)
 app.use("/api/face", faceRouter)
 app.use("/api/log", studentLogRouter)
 app.use("/api/config", configRouter)
+app.use("/api/visitor", visitorRouter)
 
 
 loadEmbeddingsIntoMemory().then(matcher => {
