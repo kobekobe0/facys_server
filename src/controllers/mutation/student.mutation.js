@@ -459,22 +459,100 @@ export const changePassword = async (req, res) => {
 
 export const updateFaceData = async (req, res) => {
     const { id } = req.params;
-    const { faceData, updatePfp } = req.body;
-    const pfpPath = `${req.filename}`;
+    const { faceData, updatePfp, password } = req.body;
     const parsedFaceData = JSON.parse(faceData);
+    const pfpPath = `${req.filename}`;
+
+    const mainDescriptor = new Float32Array(parsedFaceData.mainDescriptor);
+    const supportDescriptor1 = new Float32Array(parsedFaceData.supportDescriptor1);
+    const supportDescriptor2 = new Float32Array(parsedFaceData.supportDescriptor2);
+
+    const { _id } = req.user;
+    const admin = await Admin.findById(_id);
+    if(!admin) return res.status(404).json({ message: "Admin not found" });
+
+    const isMatch = await bcrypt.compare(password, admin.password);
+    if(!isMatch) return res.status(400).json({ message: "Invalid password" });
+
     try {
+
+        const bestMatch = global.faceMatcher.findBestMatch(mainDescriptor);
+
+        if (bestMatch._label !== 'unknown') {
+            return res.status(400).json({ message: 'Face already exists in the system' });
+        }
+
         const student = await Student.findById(id);
         if(!student) return res.status(404).json({ message: "Student not found" });
 
         const existing = await Face.findOne({ studentID: id });
         if(!existing) return res.status(404).json({ message: "Face not found" });
 
-        if(updatePfp == 'true'){
+        if(updatePfp){
             student.pfp = pfpPath;
             await student.save();
         }
 
-        existing.descriptor = Object.keys(parsedFaceData).map(key => parseFloat(parsedFaceData[key]));
+        existing.mainDescriptor = Array.from(mainDescriptor);
+        existing.supportDescriptors = [Array.from(supportDescriptor1), Array.from(supportDescriptor2)];
+        await existing.save();
+
+        await createSystemLog('UPDATE', 'Student', student._id, 'Student', 'Face data updated', null);
+
+        
+        loadEmbeddingsIntoMemory().then(matcher => {
+            global.faceMatcher = matcher;
+            console.log('FaceMatcher loaded into memory');
+        })
+
+        return res.status(200).json({ message: 'Face data updated successfully' });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Failed to update face data' });
+    }
+}
+
+
+export const updateFaceDataByStudent = async (req, res) => {
+    const { id } = req.params;
+    const { faceData, updatePfp, password } = req.body;
+    const parsedFaceData = JSON.parse(faceData);
+    const pfpPath = `${req.filename}`;
+
+    const mainDescriptor = new Float32Array(parsedFaceData.mainDescriptor);
+    const supportDescriptor1 = new Float32Array(parsedFaceData.supportDescriptor1);
+    const supportDescriptor2 = new Float32Array(parsedFaceData.supportDescriptor2);
+
+    try {
+        const student = await Student.findById(id);
+        if(!student) return res.status(404).json({ message: "Student not found" });
+        const bestMatch = global.faceMatcher.findBestMatch(mainDescriptor);
+        console.log(id)
+        console.log(bestMatch._label)
+
+        //find stundent face on global face matcher
+        if (bestMatch._label !== id) {
+            return res.status(400).json({ message: 'Face did not match existing face' });
+        }
+
+        // Perform liveness detection
+        const result = await liveness(pfpPath);
+        if (result?.score < 0.8) {
+            return res.status(400).json({ message: 'Fake face detected' });
+        }
+
+        if(updatePfp){
+            student.pfp = pfpPath;
+            await student.save();
+        }
+
+        const existing = await Face.findOne({ studentID: id });
+        if(!existing) return res.status(404).json({ message: "Face not found" });
+
+
+        existing.mainDescriptor = Array.from(mainDescriptor);
+        existing.supportDescriptors = [Array.from(supportDescriptor1), Array.from(supportDescriptor2)];
         await existing.save();
 
         await createSystemLog('UPDATE', 'Student', student._id, 'Student', 'Face data updated', null);
