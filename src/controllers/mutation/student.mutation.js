@@ -100,6 +100,7 @@ export const createStudent = async (req, res) => {
                 password: encryptedPassword,
                 email: student.email,
                 pfp: pfpPath,
+                guardianEmail: student.guardianEmail,
             });
 
             if (!newStudent) {
@@ -137,10 +138,10 @@ export const createStudent = async (req, res) => {
         }
 
         // Perform liveness detection
-        const result = await liveness(pfpPath);
-        if (result?.score < 0.8) {
-            return res.status(400).json({ message: 'Fake face detected' });
-        }
+        // const result = await liveness(pfpPath);
+        // if (result?.score < 0.8) {
+        //     return res.status(400).json({ message: 'Fake face detected' });
+        // }
 
         // Proceed to create the student if all checks pass
         const newStudent = await Student.create({
@@ -157,6 +158,7 @@ export const createStudent = async (req, res) => {
             password: encryptedPassword,
             email: student.email,
             pfp: pfpPath,
+            guardianEmail: student.guardianEmail,
         });
 
         if (!newStudent) {
@@ -228,7 +230,7 @@ export const updateEmail = async (req, res) => {
 
 
     try {
-        const student = await Student.findById(_id);
+        const student = await Student.findOne({_id: _id, deleted: false});
         if(!student) return res.status(404).json({ message: "Student not found" });
 
         const isMatch = await bcrypt.compare(password, student.password);
@@ -246,13 +248,39 @@ export const updateEmail = async (req, res) => {
         return res.status(500).json({ message: 'Failed to update email' });
     }
 }
+export const updateGuardianEmail = async (req, res) => {
+    const { _id } = req.user;
+    const { guardianEmail, password } = req.body;
+
+    console.log(req.body)
+
+
+    try {
+        const student = await Student.findOne({_id: _id, deleted: false});
+        if(!student) return res.status(404).json({ message: "Student not found" });
+
+        const isMatch = await bcrypt.compare(password, student.password);
+        if(!isMatch) return res.status(400).json({ message: "Invalid password" });
+
+        student.guardianEmail = guardianEmail;
+        await student.save();
+
+        await createSystemLog('UPDATE', 'Student', student._id, 'Student', 'Guardian Email updated', null);
+
+        return res.status(200).json({ message: 'Guardian Email updated successfully' });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Failed to update email' });
+    }
+}
 
 export const updatePassword = async (req, res) => {
     const { _id } = req.user;
     const { oldPassword, newPassword } = req.body;
 
     try {
-        const student = await Student.findById(_id);
+        const student = await Student.findOne({_id: _id, deleted: false});
         if(!student) return res.status(404).json({ message: "Student not found" });
 
         const isMatch = await bcrypt.compare(oldPassword, student.password);
@@ -537,10 +565,10 @@ export const updateFaceDataByStudent = async (req, res) => {
         }
 
         // Perform liveness detection
-        const result = await liveness(pfpPath);
-        if (result?.score < 0.8) {
-            return res.status(400).json({ message: 'Fake face detected' });
-        }
+        // const result = await liveness(pfpPath);
+        // if (result?.score < 0.8) {
+        //     return res.status(400).json({ message: 'Fake face detected' });
+        // }
 
         if(updatePfp){
             student.pfp = pfpPath;
@@ -581,12 +609,13 @@ export const deleteOutdatedAccounts = async (req, res) => {
 
         if (!isMatch) return res.status(400).json({ message: 'Invalid password' });
 
-        const outdateds = await Student.find({ updated: false });
+        //const outdateds = await Student.find({ updated: false });
 
-        await Student.deleteMany({ updated: false });
-        await SystemLog.deleteMany({ entityID: { $in: outdateds.map(student => student._id) } });
-        await Face.deleteMany({ studentID: { $in: outdateds.map(student => student._id) } });
-        await StudentLog.deleteMany({ studentID: { $in: outdateds.map(student => student._id) } });
+        const archiveStudents = await Student.updateMany({ updated: false }, { $set: { deleted: true } });
+        // await Student.deleteMany({ updated: false });
+        // await SystemLog.deleteMany({ entityID: { $in: outdateds.map(student => student._id) } });
+        // await Face.deleteMany({ studentID: { $in: outdateds.map(student => student._id) } });
+        // await StudentLog.deleteMany({ studentID: { $in: outdateds.map(student => student._id) } });
 
         await createSystemLog('DELETE', 'Student', null, 'Admin', 'Outdated accounts deleted', null);
 
@@ -599,5 +628,76 @@ export const deleteOutdatedAccounts = async (req, res) => {
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: 'Failed to delete outdated accounts' });
+    }
+}
+
+export const deleteAccountPermanently = async (req, res) => {
+    const { idss, password } = req.body;
+    const { _id } = req.user;
+    
+    const ids = JSON.parse(idss);
+    try {
+        console.log(ids)
+        console.log(req.body)
+        const admin = await Admin.findById(_id);
+        const isMatch = await bcrypt.compare(password, admin.password);
+
+        if (!isMatch) return res.status(400).json({ message: 'Invalid password' });
+
+        for (let id of ids) {
+            const student = await Student.findById(id);
+            if (!student) return res.status(404).json({ message: 'Student not found' });
+
+            await StudentLog.deleteMany({ studentID: id });
+            await SystemLog.deleteMany({ entityID: id });
+            await Face.deleteOne({ studentID: id });
+            await Student.deleteOne({ _id: id });
+
+            await createSystemLog('DELETE', 'Student', student._id, 'Admin', 'Student deleted permanently', null);
+        }
+
+        
+
+        loadEmbeddingsIntoMemory().then(matcher => {
+            global.faceMatcher = matcher;
+            console.log('FaceMatcher loaded into memory');
+        })
+
+        return res.status(200).json({ message: 'Student deleted permanently' });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Failed to delete student' });
+    }
+}
+
+export const restoreAccount = async (req, res) => {
+    const {idss, password} = req.body;
+    const {_id} = req.user;
+    const ids = JSON.parse(idss)
+    try {
+        const admin = await Admin.findById(_id);
+        const isMatch = await bcrypt.compare(password, admin.password);
+
+        if (!isMatch) return res.status(400).json({ message: 'Invalid password' });
+
+        for (let id of ids) {
+            const student = await Student.findById(id);
+            if (!student) return res.status(404).json({ message: 'Student not found' });
+
+            student.deleted = false;
+            if(!student.guardianEmail){
+                student.guardianEmail = "test@email.com"
+            }
+            await student.save();
+
+            await createSystemLog('RESTORE', 'Student', student._id, 'Admin', 'Student restored', null);
+        }
+
+        
+
+        return res.status(200).json({ message: 'Student restored' });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Failed to restore student' });
     }
 }

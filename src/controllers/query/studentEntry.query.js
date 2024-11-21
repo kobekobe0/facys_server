@@ -3,7 +3,7 @@ import Student from "../../models/Student.js";
 import paginate from "../../helper/paginate.js";
 
 export const getStudentLogs = async (req, res) => {
-    const { page = 1, limit = 100, name = '', startDate, endDate } = req.query;
+    const { page = 1, limit = 100, name = '', startDate, endDate, section = '' } = req.query;
     console.log(req.query);
     try {
         // Initialize an empty query object
@@ -12,12 +12,32 @@ export const getStudentLogs = async (req, res) => {
         // If name is provided, search for matching student IDs from the Student collection
         if (name) {
             const students = await Student.find({
-                name: { $regex: new RegExp(name, 'i') } // Case-insensitive search on the 'name' field
+                name: { $regex: new RegExp(name, 'i') }, // Case-insensitive search on the 'name' field
+                deleted: false // Filter out deleted students
             }).select('_id'); // Only retrieve the student IDs
 
             const studentIds = students.map(student => student._id);
             query.studentID = { $in: studentIds }; // Filter logs by student IDs
         }
+
+        if (section) {
+            const studentsInSection = await Student.find({
+                section: section, // Case-insensitive search on the 'section' field
+                deleted: false // Filter out deleted students
+            }).select('_id'); // Only retrieve the student IDs
+    
+            const sectionStudentIds = studentsInSection.map(student => student._id);
+            
+            // If query.studentID already exists, filter further
+            if (query.studentID) {
+                query.studentID.$in = query.studentID.$in.filter(id => sectionStudentIds.includes(id));
+            } else {
+                query.studentID = { $in: sectionStudentIds }; // Initialize with section-based filtering
+            }
+        }
+
+        console.log(query)
+
 
         // Add date range filter if provided
         if (startDate && endDate) {
@@ -34,13 +54,16 @@ export const getStudentLogs = async (req, res) => {
             limit, 
             sort: { timeIn: -1 },
             populate: { 
+                match: { deleted: false },
                 path: 'studentID', // Field to populate
                 select: 'name studentNumber department section' // Fields to return from the Student document
             }
         });
 
-        // Send the result as a JSON response
-        return res.status(200).json(logs);
+        const filteredLogs = logs.docs.filter(log => log.studentID !== null);
+
+        // Return the filtered logs in the response
+        return res.status(200).json({ ...logs, docs: filteredLogs });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ error, message: 'Failed to fetch student logs' });

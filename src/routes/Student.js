@@ -1,6 +1,6 @@
 import express from "express";
-import { blockStudent, createStudent, deleteOutdatedAccounts, deleteStudent, detectFace, unblockStudent, updateEmail, updateFaceData, updateFaceDataByStudent, updatePassword, updatePasswordByAdmin, updateStudent } from "../controllers/mutation/student.mutation.js";
-import { getStudent, verifyJWT, getStudents, loginStudent, getSelf, getOutdatedAccounts, getBlockedStudents, getOutdatedStudents } from "../controllers/query/student.query.js";
+import { blockStudent, createStudent, deleteAccountPermanently, deleteOutdatedAccounts, deleteStudent, detectFace, restoreAccount, unblockStudent, updateEmail, updateFaceData, updateFaceDataByStudent, updateGuardianEmail, updatePassword, updatePasswordByAdmin, updateStudent } from "../controllers/mutation/student.mutation.js";
+import { getStudent, verifyJWT, getStudents, loginStudent, getSelf, getOutdatedAccounts, getBlockedStudents, getOutdatedStudents, getDeletedAccounts } from "../controllers/query/student.query.js";
 import parseCOR from "../middleware/parseCOR.js";
 import { processImage, uploadSingleImage } from "../middleware/uploadImage.js";
 import { studentAuth } from "../middleware/studentAuth.js";
@@ -34,9 +34,13 @@ studentRouter.post('/update-face/:id', adminAuth, uploadSingleImage, processImag
 studentRouter.post('/update-face-by-student/:id', uploadSingleImage, processImage, updateFaceDataByStudent)
 
 studentRouter.get('/outdated', getOutdatedAccounts)
+studentRouter.get('/deleted', getDeletedAccounts)
 studentRouter.put('/delete-outdated', adminAuth, deleteOutdatedAccounts)
+studentRouter.post('/delete-permanently', adminAuth, deleteAccountPermanently)
+studentRouter.post('/restore-account', adminAuth, restoreAccount)
 
 studentRouter.put('/email', studentAuth, updateEmail)
+studentRouter.put('/guardian-email', studentAuth, updateGuardianEmail)
 studentRouter.put('/password', studentAuth, updatePassword)
 
 export default studentRouter;

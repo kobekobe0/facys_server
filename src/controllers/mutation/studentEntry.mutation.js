@@ -1,12 +1,13 @@
 import StudentLog from '../../models/StudentLog.js';
 import Student from '../../models/Student.js';
 import { io } from '../../index.js';
+import { sendEmail } from '../../helper/emailer.js';
 
 export const createStudentLog = async (req, res) => {
     const { studentID } = req.body;
 
     try {
-        const student = await Student.findById(studentID);
+        const student = await Student.findOne({_id: studentID, deleted: false});
         if (!student) {
             return res.status(404).json({ message: "Student not found" });
         }
@@ -34,6 +35,18 @@ export const createStudentLog = async (req, res) => {
             studentID,
             timeOut: null,
         });
+
+        const emailOptions = {
+            to: student.guardianEmail,
+            subject: "Campus Entry",
+            text: `${student.name} has entered the campus at ${new Date().toLocaleString()}`,
+            html: `
+                <h1>Campus Entry</h1>
+                <p>${student.name} has entered the campus at ${new Date().toLocaleString()}</p>
+            `,
+        }
+
+        await sendEmail(emailOptions);
 
         if (!studentLog) {
             console.error("Error creating student log");

@@ -71,8 +71,9 @@ export const getConfig = async (req, res) => {
 export const getUniqueDepartments = async (req, res) => {
     try {
         const UniqueDepartmentsFromStudents = await Student.find().distinct('department');
-        console.log(UniqueDepartmentsFromStudents);
-        return res.status(200).json({ UniqueDepartmentsFromStudents });
+        const UniqueSectionFromStudents = await Student.find().distinct('section');
+        console.log(UniqueSectionFromStudents);
+        return res.status(200).json({ UniqueDepartmentsFromStudents, UniqueSectionFromStudents });
 
     } catch (error) {
         return  res.status(500).json({ message: error.message });

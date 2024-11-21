@@ -27,7 +27,7 @@ const SystemLogSchema = new Schema({
     entityType: {
         type: String,
         required: true,
-        enum: ['Student', 'SecurityGuard', 'Admin']
+        enum: ['Student', 'SecurityGuard', 'Admin', 'Visitor']
     },
     attachment: {
         type: String,

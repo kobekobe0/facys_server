@@ -8,7 +8,7 @@ export const createResetPassword = async (req, res) => {
     const {studentNumber} = req.body;
 
     try{
-        const student = await Student.findOne({studentNumber});
+        const student = await Student.findOne({studentNumber, deleted: false});
         if(!student){
             return res.status(400).json({message: "Student not found"});
         }
@@ -58,7 +58,7 @@ export const resetPassword = async (req, res) => {
             return res.status(400).json({message: "Reset password expired"});
         }
 
-        const student = await Student.findOne({studentNumber: resetPassword.studentNumber});
+        const student = await Student.findOne({studentNumber: resetPassword.studentNumber, deleted: false});
         if(!student){
             return res.status(404).json({message: "Student not found"});
         }

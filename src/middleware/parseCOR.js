@@ -44,6 +44,7 @@ function parseStudentInfo(dataArray) {
 
     // Loop through the data
     dataArray.forEach((item, index) => {
+    
         // Detect degree first (e.g., "Bachelor of", "Master of", etc.)
         if (degreeRegex.test(item)) {
             degree = item;
@@ -147,7 +148,6 @@ const handleRequest = async (req, res) => {
     pdfParser.on('pdfParser_dataReady', async (pdfData) => {
         if (responseSent) return; // Avoid double responses
         const texts = extractText(pdfData);
-
         if(!texts) return res.status(400).json({
             message: 'Invalid PDF file. Please upload a official and unaltered COR from student portal.',
         })
@@ -158,7 +158,7 @@ const handleRequest = async (req, res) => {
 
         const otherDetails = parseStudentInfo(texts.slice(22, 29))
 
-        details = {...details, ...otherDetails}
+        details = {...details, ...otherDetails, section: schedules[0][3]}
 
         const config = await Config.findOne();
 
@@ -191,9 +191,11 @@ const groupSchedules = (texts) => {
 
     for (let i = 0; i < texts.length; i++) {
         if (started) {
-            subjectSchedule.push(texts[i]);
+            
             started = false;
+            console.log(texts[i])
         } else {
+            
             if (texts[i].length === 1) {
                 continue;  // Skip single-character entries
             } else if (texts[i].match(timeRegex) && texts[i + 1].length !== 1) {
@@ -219,7 +221,7 @@ const groupSchedules = (texts) => {
     if (subjectSchedule.length > 0) {
         schedules.push(subjectSchedule);
     }
-
+console.log("SCHEDS: ",schedules);
     return schedules;
 };
 

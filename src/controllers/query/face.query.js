@@ -28,7 +28,7 @@ export const queryFace = async (req, res) => {
         result = await Visitor.findById(visitorId).select('name address contactNumber pfp email dateOfBirth organization'); // Include relevant Visitor fields
         isVisitor = true;
     } else {
-        result = await Student.findById(bestMatch._label).select('name studentNumber isBlocked department degree section yearLevel updated SY dateOfBirth pfp');
+        result = await Student.findOne({_id: bestMatch._label, deleted: false}).select('name studentNumber isBlocked department degree section yearLevel updated SY dateOfBirth pfp');
     }
 
     if (!result) {

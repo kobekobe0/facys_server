@@ -5,13 +5,16 @@ import generateAuthToken from "../../helper/generateAuthToken.js";
 import jwt from 'jsonwebtoken';
 
 export const getStudents = async (req, res) => {
-    const { page = 1, limit = 100, department, name, yearLevel } = req.query;
+    const { page = 1, limit = 100, department, name, yearLevel, section } = req.query;
 
     const query = {
         deleted: false,
         ...(yearLevel && { yearLevel: { $regex: yearLevel, $options: 'i' } }), // case-insensitive partial match for yearLevel
-        ...(department && { department })
+        ...(department && { department }),
+        ...(section && { section: section }) // case-insensitive partial match for section
     };
+
+    console.log(query)
 
     const options = {
         page: parseInt(page, 10),
@@ -95,7 +98,7 @@ export const loginStudent = async (req, res) => {
     const { studentNumber, password } = req.body;
 
     try {
-        const student = await Student.findOne({ studentNumber });
+        const student = await Student.findOne({ studentNumber, deleted: false });
         if (!student) {
             return res.status(404).json({ message: "Student not found" });
         }
@@ -128,7 +131,7 @@ export const verifyJWT = async (req, res) => {
 export const getSelf = async (req, res) => {
     const { _id } = req.user;
     try {
-        const student = await Student.findById(_id).select('name _id degree section yearLevel SY schedule email updated cellphone studentNumber pfp department');
+        const student = await Student.findById(_id).select('name _id degree section yearLevel SY schedule email updated cellphone studentNumber pfp department guardianEmail');
         if (!student) {
             return res.status(404).json({ message: "Student not found" });
         }
@@ -141,9 +144,33 @@ export const getSelf = async (req, res) => {
 
 export const getOutdatedAccounts = async (req, res) => {
     try {
-        const students = await Student.find({ updated: false }).select('name _id email studentNumber department');
+        const students = await Student.find({ updated: false, deleted:false }).select('name _id email studentNumber department');
         res.status(200).json(students);
     } catch (error) {
         res.status(500).json({ message: "Error fetching students", error: error.message });
     }
 }
+
+export const getDeletedAccounts = async (req, res) => {
+    const { page = 1, limit = 100, name } = req.query;
+
+    const query = {
+        deleted: true,
+    };
+
+    console.log(query)
+
+    const options = {
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+        sort: { "name.last": 1 },
+        select: '-deleted'
+    };
+
+    try {
+        const students = await paginate(Student, query, options, name);
+        res.status(200).json(students);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching students", error: error.message });
+    }
+};

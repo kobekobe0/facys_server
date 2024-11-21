@@ -61,6 +61,10 @@ const studentSchema = new Schema({
         type: String,
         required: true,
     },
+    guardianEmail: {
+        type: String,
+        required: true,
+    },
     updated: {
         type: Boolean,
         required: true,
