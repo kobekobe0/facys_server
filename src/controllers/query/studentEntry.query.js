@@ -3,7 +3,7 @@ import Student from "../../models/Student.js";
 import paginate from "../../helper/paginate.js";
 
 export const getStudentLogs = async (req, res) => {
-    const { page = 1, limit = 100, name = '', startDate, endDate, section = '' } = req.query;
+    const { page = 1, limit = 100, name = '', startDate, endDate, section = '', sex = '' } = req.query;
     console.log(req.query);
     try {
         // Initialize an empty query object
@@ -34,6 +34,23 @@ export const getStudentLogs = async (req, res) => {
             } else {
                 query.studentID = { $in: sectionStudentIds }; // Initialize with section-based filtering
             }
+        }
+
+        if (sex) {
+            const studentsInSection = await Student.find({
+                sex: sex, // Case-insensitive search on the 'section' field
+                deleted: false // Filter out deleted students
+            }).select('_id'); // Only retrieve the student IDs
+
+            const sectionStudentIds = studentsInSection.map(student => student._id);
+
+            // If query.studentID already exists, filter further
+            if (query.studentID) {
+                query.studentID.$in = query.studentID.$in.filter(id => sectionStudentIds.includes(id));
+            } else {
+                query.studentID = { $in: sectionStudentIds }; // Initialize with section-based filtering
+            }
+
         }
 
         console.log(query)

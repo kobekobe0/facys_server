@@ -73,6 +73,11 @@ const studentSchema = new Schema({
     pfp: {
         type: String,
         default: null
+    },
+    sex: {
+        type: String,
+        required: true,
+        default: 'M'
     }
 });
 

@@ -5,13 +5,14 @@ import generateAuthToken from "../../helper/generateAuthToken.js";
 import jwt from 'jsonwebtoken';
 
 export const getStudents = async (req, res) => {
-    const { page = 1, limit = 100, department, name, yearLevel, section } = req.query;
+    const { page = 1, limit = 100, department, name, yearLevel, section, sex } = req.query;
 
     const query = {
         deleted: false,
         ...(yearLevel && { yearLevel: { $regex: yearLevel, $options: 'i' } }), // case-insensitive partial match for yearLevel
         ...(department && { department }),
-        ...(section && { section: section }) // case-insensitive partial match for section
+        ...(section && { section: section }), // case-insensitive partial match for section
+        ...(sex && { sex: sex })
     };
 
     console.log(query)

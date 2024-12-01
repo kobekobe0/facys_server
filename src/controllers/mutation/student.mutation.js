@@ -63,7 +63,6 @@ export const createStudent = async (req, res) => {
 
         console.log("Student Data:", student);
         console.log("Schedule Data:", schedule);
-
         // Directly retrieve the main and support descriptors
         const mainDescriptor = new Float32Array(parsedFaceData.mainDescriptor);
         const supportDescriptor1 = new Float32Array(parsedFaceData.supportDescriptor1);

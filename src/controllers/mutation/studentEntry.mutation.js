@@ -36,16 +36,18 @@ export const createStudentLog = async (req, res) => {
             timeOut: null,
         });
 
+        const entryDate = new Date();
+        const entryDatePlus8Hours = new Date(entryDate.getTime() + 8 * 60 * 60 * 1000);
+        
         const emailOptions = {
             to: student.guardianEmail,
             subject: "Campus Entry",
-            text: `${student.name} has entered the campus at ${new Date().toLocaleString()}`,
+            text: `${student.name} has entered the campus at ${entryDatePlus8Hours.toLocaleString()}`,
             html: `
                 <h1>Campus Entry</h1>
-                <p>${student.name} has entered the campus at ${new Date().toLocaleString()}</p>
+                <p>${student.name} has entered the campus at ${entryDatePlus8Hours.toLocaleString()}</p>
             `,
-        }
-
+        };
         await sendEmail(emailOptions);
 
         if (!studentLog) {
