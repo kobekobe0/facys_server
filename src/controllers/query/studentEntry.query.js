@@ -73,7 +73,7 @@ export const getStudentLogs = async (req, res) => {
             populate: { 
                 match: { deleted: false },
                 path: 'studentID', // Field to populate
-                select: 'name studentNumber department section' // Fields to return from the Student document
+                select: 'name studentNumber department section sex' // Fields to return from the Student document
             }
         });
 
